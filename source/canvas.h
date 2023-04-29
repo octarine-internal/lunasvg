@@ -2,7 +2,7 @@
 #define CANVAS_H
 
 #include "property.h"
-#include "plutovg.h"
+#include <vg/vg.h>
 
 #include <memory>
 
@@ -38,9 +38,9 @@ class CanvasImpl;
 class Canvas
 {
 public:
-    static std::shared_ptr<Canvas> create(unsigned char* data, unsigned int width, unsigned int height, unsigned int stride);
-    static std::shared_ptr<Canvas> create(double x, double y, double width, double height);
-    static std::shared_ptr<Canvas> create(const Rect& box);
+    static std::shared_ptr<Canvas> create(vg::CommandListRef cl, double x, double y, double width, double height);
+    static std::shared_ptr<Canvas> create(std::shared_ptr<Canvas> parent, double x, double y, double width, double height);
+    static std::shared_ptr<Canvas> create(std::shared_ptr<Canvas> parent, const Rect& box);
 
     void setColor(const Color& color);
     void setLinearGradient(double x1, double y1, double x2, double y2, const GradientStops& stops, SpreadMethod spread, const Transform& transform);
@@ -52,25 +52,34 @@ public:
     void blend(const Canvas* source, BlendMode mode, double opacity);
     void mask(const Rect& clip, const Transform& transform);
 
-    void clear(unsigned int value);
     void rgba();
     void luminance();
 
     unsigned int width() const;
     unsigned int height() const;
-    unsigned int stride() const;
-    unsigned char* data() const;
     Rect box() const;
+    const std::vector<vg::CommandListHandle>& child() const { return this->child_; }
 
     ~Canvas();
 private:
-    Canvas(unsigned char* data, int width, int height, int stride);
-    Canvas(int x, int y, int width, int height);
+    Canvas(vg::CommandListRef cl, int x, int y, int width, int height);
 
-    plutovg_surface_t* surface;
-    plutovg_t* pluto;
-    plutovg_matrix_t translation;
-    plutovg_rect_t rect;
+    enum class PaintType : uint8_t {
+        COLOR,
+        LINEAR_GRADIENT,
+        RADIAL_GRADIENT,
+    };
+    PaintType paintType;
+    vg::Color color;
+    float gradientParams[4];
+    std::vector<vg::Color> gradientColors;
+    std::vector<float> gradientStops;
+    const Path* latestPath;
+
+    vg::CommandListRef cl;
+    std::vector<vg::CommandListHandle> child_;
+    std::shared_ptr<Canvas> parent;
+    Rect rect;
 };
 
 } // namespace lunasvg

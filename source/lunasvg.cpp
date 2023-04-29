@@ -368,38 +368,27 @@ double Document::height() const
     return root->height;
 }
 
-void Document::render(Bitmap bitmap, const Matrix& matrix) const
+std::vector<vg::CommandListHandle> Document::render(vg::CommandListRef cl, const Matrix& matrix) const
 {
     RenderState state(nullptr, RenderMode::Display);
-    state.canvas = Canvas::create(bitmap.data(), bitmap.width(), bitmap.height(), bitmap.stride());
-    state.transform = Transform(matrix);
+    state.canvas = Canvas::create(cl, 0., 0., root->width, root->height);
+    state.transform = Transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
     root->render(state);
+    state.canvas->rgba();
+    return state.canvas->child();
 }
 
-Bitmap Document::renderToBitmap(std::uint32_t width, std::uint32_t height, std::uint32_t backgroundColor) const
+std::vector<vg::CommandListHandle> Document::renderToBitmap(vg::CommandListRef cl) const
 {
     if(root->width == 0.0 || root->height == 0.0)
-        return Bitmap{};
+        return {};
 
-    if(width == 0 && height == 0)
-    {
-        width = static_cast<std::uint32_t>(std::ceil(root->width));
-        height = static_cast<std::uint32_t>(std::ceil(root->height));
-    }
-    else if(width != 0 && height == 0)
-    {
-        height = static_cast<std::uint32_t>(std::ceil(width * root->height / root->width));
-    }
-    else if(height != 0 && width == 0)
-    {
-        width = static_cast<std::uint32_t>(std::ceil(height * root->width / root->height));
-    }
+    Matrix matrix{1.f, 0, 0, 1.f, 0, 0};
+    return render(cl, matrix);
+}
 
-    Matrix matrix(width / root->width, 0, 0, height / root->height, 0, 0);
-    Bitmap bitmap(width, height);
-    bitmap.clear(backgroundColor);
-    render(bitmap, matrix);
-    return bitmap;
+size_t Document::estimateMemoryUsage() const {
+    return this->root->estimateMemoryUsage();
 }
 
 Document::Document()

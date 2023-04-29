@@ -96,7 +96,7 @@ LayoutClipPath::LayoutClipPath()
 void LayoutClipPath::apply(RenderState& state) const
 {
     RenderState newState(this, RenderMode::Clipping);
-    newState.canvas = Canvas::create(state.canvas->box());
+    newState.canvas = Canvas::create(state.canvas, state.canvas->box());
     newState.transform = transform * state.transform;
     if(units == Units::ObjectBoundingBox)
     {
@@ -128,7 +128,7 @@ void LayoutMask::apply(RenderState& state) const
     }
 
     RenderState newState(this, state.mode());
-    newState.canvas = Canvas::create(state.canvas->box());
+    newState.canvas = Canvas::create(state.canvas, state.canvas->box());
     newState.transform = state.transform;
     if(contentUnits == Units::ObjectBoundingBox)
     {
@@ -247,7 +247,7 @@ void LayoutPattern::apply(RenderState& state) const
     auto height = rect.h * scaley;
 
     RenderState newState(this, RenderMode::Display);
-    newState.canvas = Canvas::create(0, 0, width, height);
+    newState.canvas = Canvas::create(state.canvas, 0., 0., width, height);
     newState.transform = Transform::scaled(scalex, scaley);
 
     if(viewBox.valid())
@@ -459,7 +459,7 @@ void RenderState::beginGroup(RenderState& state, const BlendInfo& info)
     auto box = transform.map(m_object->strokeBoundingBox());
     box.intersect(transform.map(info.clip));
     box.intersect(state.canvas->box());
-    canvas = Canvas::create(box);
+    canvas = Canvas::create(state.canvas, box);
 }
 
 void RenderState::endGroup(RenderState& state, const BlendInfo& info)

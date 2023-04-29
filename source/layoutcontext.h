@@ -37,6 +37,7 @@ public:
 
     virtual const Rect& fillBoundingBox() const { return Rect::Invalid;}
     virtual const Rect& strokeBoundingBox() const { return Rect::Invalid;}
+    virtual size_t estimateMemoryUsage() const { return sizeof(*this); }
 
     bool isPaint() const { return id == LayoutId::LinearGradient || id == LayoutId::RadialGradient || id == LayoutId::Pattern || id == LayoutId::SolidColor; }
     bool isHidden() const { return isPaint() || id == LayoutId::ClipPath || id == LayoutId::Mask || id == LayoutId::Marker; }
@@ -50,6 +51,12 @@ using LayoutList = std::list<std::unique_ptr<LayoutObject>>;
 class LayoutContainer : public LayoutObject
 {
 public:
+    virtual size_t estimateMemoryUsage() const {
+        size_t estimate = sizeof(*this);
+        for (auto& child : this->children)
+            estimate += child->estimateMemoryUsage();
+        return estimate;
+    }
     LayoutContainer(LayoutId id);
 
     const Rect& fillBoundingBox() const;
