@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <vg/vg.h>
 
 #if defined(_MSC_VER) && defined(LUNASVG_SHARED)
